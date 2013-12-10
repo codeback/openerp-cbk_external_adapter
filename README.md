@@ -1,2 +1,2 @@
-openerp-cbk_pricelist
-=====================
+openerp-cbk_external_adapter
+============================
