@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>        
+        <record id="view_partner_form_external_adapter" model="ir.ui.view">
+            <field name="name">res.partner.form.external.adapter</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_form"/>
+            <field name="priority" eval="20"/>
+            <field name="arch" type="xml">              
+
+                <notebook position="inside">
+                    <page string="External Web">           
+                        <group string="Access" colspan="4">
+                            <field name="web_access"/>
+                            <field name="web_username"/>
+                            <field name="web_password" password="True"/>                           
+                        </group>
+                    </page>
+                </notebook>                           
+            </field> 
+        </record>      
+    </data>
+</openerp>
