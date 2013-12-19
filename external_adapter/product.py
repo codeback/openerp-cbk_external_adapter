@@ -33,7 +33,7 @@ class external_adapter_product(osv.osv):
     _name = "external.adapter.product"
    
     def get_products(self, cr, uid, fields, pricelist_id, partner_id, context=None):                 
-        args = [("parent_prod_id","=",False)]
+        args = [("web_visible","=",True), ("parent_prod_id","=",False)]
         prod_model = self.pool.get('product.product')
         
         prod_ids = prod_model.search(cr, uid, args)
@@ -50,7 +50,7 @@ class external_adapter_product(osv.osv):
         return prods
 
     def get_related_products(self, cr, uid, prod_id, fields, context=None):        
-        args = [("parent_prod_id","=",prod_id)]
+        args = [("web_visible","=",True), ("parent_prod_id","=",prod_id)]
         prod_model = self.pool.get('product.product')
         prod_ids = prod_model.search(cr, uid, args)
         return prod_model.read(cr, uid, prod_ids, fields)        

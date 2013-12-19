@@ -1,7 +1,7 @@
 # -*- encoding: utf-8 -*-
 ##############################################################################
 #
-#    external_adapter_partner
+#    external_adapter_sale_order
 #    Copyright (c) 2013 Codeback Software S.L. (http://codeback.es)    
 #    @author: Miguel García <miguel@codeback.es>
 #    @author: Javier Fuentes <javier@codeback.es>
@@ -26,40 +26,20 @@ from datetime import datetime, timedelta
 from openerp.tools.translate import _
 import pdb
 
-class external_adapter_partner(osv.osv):
+class external_adapter_sale_order(osv.osv):
     """añadimos los nuevos campos"""
     
-    _name = "external.adapter.partner"
+    _name = "external.adapter.sale.order"
    
-    def login(self, cr, uid, username, password):
-        partner_model = self.pool.get('res.partner')
-        args = [("web_username","=",username)]
+    def get_by_partner(self, cr, uid, partner_id, fields):
+        order_model = self.pool.get('sale.order')
+        args = [("partner_id","=",partner_id)]
 
-        partner_id = partner_model.search(cr, uid, args)
+        order_ids = order_model.search(cr, uid, args)
 
-        if partner_id:
-            partner = partner_model.browse(cr, uid, partner_id)[0]
+        orders = {}
 
-            if partner.web_password == password:
-                response = {
-                    "status": 200,
-                    "message": "ok",
-                    "data": {
-                        "id": partner.id,
-                        "webUsername": partner.web_username,
-                        "name": partner.name,
-                        "image": partner.image
-                    }
-                }
-            else:
-                response = {
-                    "status": 401,
-                    "message": "incorrect password"
-                }
-        else:
-            response = {
-                "status": 401,
-                "message": "user not found"
-            }
-
-        return response
+        if order_ids:
+            orders = order_model.read(cr, uid, order_ids, fields)
+        
+        return orders

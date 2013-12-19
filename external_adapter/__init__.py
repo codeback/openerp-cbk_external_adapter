@@ -5,7 +5,7 @@
 #    Copyright (c) 2013 Codeback Software S.L. (http://codeback.es)    
 #    @author: Miguel García <miguel@codeback.es>
 #    @author: Javier Fuentes <javier@codeback.es>
-#    
+#
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as published by
 #    the Free Software Foundation, either version 3 of the License, or
@@ -21,25 +21,8 @@
 #
 ##############################################################################
 
-{
-    'name': 'External adapter (web-connector)',
-    'version': '0.1',
-    'author': 'Codeback Software',
-    'summary': '',
-    'description' : 'Modulo para optimizar ciertas llamadas a módulos de OpenERP desde clientes externos',
-    'website': 'http://codeback.es',
-    'images': [],    
-    'depends': ['product'],
-    'category': '',
-    'sequence': 26,
-    'demo': [],
-    'data': [
-        'res_partner/res_partner_view.xml',
-        'product/product_view.xml',
-    ],
-    'test': [],
-    'installable': True,
-    'application': False,
-    'auto_install': False,
-    'css': [],
-}
+import product
+import partner
+import sale_order
+
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
