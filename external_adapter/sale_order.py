@@ -24,6 +24,7 @@
 from osv import fields, osv
 from datetime import datetime, timedelta
 from openerp.tools.translate import _
+from decimal import Decimal
 import pdb
 
 class external_adapter_sale_order(osv.osv):
@@ -43,3 +44,63 @@ class external_adapter_sale_order(osv.osv):
             orders = order_model.read(cr, uid, order_ids, fields)
         
         return orders
+
+    def get_order(self, cr, uid, order_id, fields):
+        order_model = self.pool.get('sale.order')
+        line_model = self.pool.get('sale.order.line')
+        product_model = self.pool.get('product.product')
+
+        order = order_model.read(cr, uid, [int(order_id)], fields)[0]       
+
+        lines = {}
+
+        fields = ["product_uom_qty", "price_unit", "price_subtotal"]
+        fields.append("product_id")
+
+        if order["order_line"]:
+            lines = line_model.read(cr, uid, order["order_line"], fields)            
+            for line in lines:
+                product = product_model.read(cr, uid, line["product_id"][0], ["name_template", "image_small"])
+                line["product_name"] = product["name_template"]
+                line["product_image"] = product["image_small"]
+        
+        return {"order": order, "lines": lines}
+
+
+    def write_order(self, cr, uid, order_id, lines, pricelist_id, partner_id, fields):
+        order_model = self.pool.get('sale.order')
+        line_model = self.pool.get('sale.order.line')
+        ext_prod_model = self.pool.get('external.adapter.product')
+        prod_model = self.pool.get('product.product')
+        
+        order = order_model.read(cr, uid, [int(order_id)], fields)[0]       
+
+        # Borrar lineas
+        line_model.unlink(cr, uid, order["order_line"])                
+
+        # Rellenar todos los valores a excepción del precio
+        for line in lines:
+            
+            value = {
+                "product_id": line["product_id"],
+                "name": line["product_name"],
+                "product_uom_qty": Decimal(line["product_uom_qty"]),
+                "order_id": int(order_id)
+            }
+
+            prod =  prod_model.read(cr, uid, [line["product_id"]], ["parent_prod_id", "cost_price"])[0]            
+
+            if prod["parent_prod_id"]:
+                # Se obtiene el precio del producto padre
+                prod_id = prod["parent_prod_id"][0]                
+            else:
+                prod_id = line["product_id"]
+            
+            product_price = ext_prod_model.get_pricelist(cr, uid, [prod_id], pricelist_id, partner_id)[prod_id][pricelist_id]
+            value["price_unit"] = product_price
+            value["purchase_price"] = prod["cost_price"]
+
+            line_model.create(cr, uid, value)
+
+        return True
+  

@@ -32,20 +32,28 @@ class external_adapter_product(osv.osv):
     
     _name = "external.adapter.product"
    
-    def get_products(self, cr, uid, fields, pricelist_id, partner_id, context=None):                 
-        args = [("web_visible","=",True), ("parent_prod_id","=",False)]
+    def get_products(self, cr, uid, pricelist_id, partner_id, args, fields, context=None):  
+
         prod_model = self.pool.get('product.product')
-        
+
+        if not args:
+            args = []
+
+        args += [("web_visible","=",True)]                
         prod_ids = prod_model.search(cr, uid, args)
 
-        prods = prod_model.read(cr, uid, prod_ids, fields)
-
-        results = self._get_pricelist(cr, uid, prod_ids, pricelist_id, partner_id, context)
+        fields.append("parent_prod_id")
+        prods = prod_model.read(cr, uid, prod_ids, fields)        
 
         for prod in prods:
-            id = prod["id"]
+            if prod["parent_prod_id"]:
+                # Se obtiene el precio del producto padre
+                prod_id = prod["parent_prod_id"][0]                
+            else:
+                prod_id = prod["id"]
 
-            prod["price"] = "{0:.2f}".format(results[id][pricelist_id])
+            product_price = self.get_pricelist(cr, uid, [prod_id], pricelist_id, partner_id)[prod_id][pricelist_id]
+            prod["price"] = "{0:.2f}".format(product_price)
 
         return prods
 
@@ -55,7 +63,7 @@ class external_adapter_product(osv.osv):
         prod_ids = prod_model.search(cr, uid, args)
         return prod_model.read(cr, uid, prod_ids, fields)        
 
-    def _get_pricelist(self, cr, uid, prod_ids, pricelist_id, partner_id, context=None):
+    def get_pricelist(self, cr, uid, prod_ids, pricelist_id, partner_id, context=None):
 
         pl_model = self.pool.get('product.pricelist')
 

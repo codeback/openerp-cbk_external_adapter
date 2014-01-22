@@ -49,7 +49,8 @@ class external_adapter_partner(osv.osv):
                         "data": {
                             "id": partner.id,
                             "webUsername": partner.web_username,
-                            "name": partner.name
+                            "name": partner.name,
+                            "pricelistId": partner.property_product_pricelist
                         }
                     }
                 else:
