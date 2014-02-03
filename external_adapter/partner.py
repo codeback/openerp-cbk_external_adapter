@@ -43,14 +43,13 @@ class external_adapter_partner(osv.osv):
             if partner.web_access:
 
                 if partner.web_password == password:
+
                     response = {
                         "status": 200,
                         "message": "ok",
                         "data": {
                             "id": partner.id,
-                            "webUsername": partner.web_username,
-                            "name": partner.name,
-                            "pricelistId": partner.property_product_pricelist
+                            "webUsername": partner.web_username
                         }
                     }
                 else:

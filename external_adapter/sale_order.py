@@ -34,6 +34,7 @@ class external_adapter_sale_order(osv.osv):
    
     def get_by_partner(self, cr, uid, partner_id, fields):
         order_model = self.pool.get('sale.order')
+        stock_model = self.pool.get('stock.picking.out')
         args = [("partner_id","=",partner_id)]
 
         order_ids = order_model.search(cr, uid, args)
@@ -41,7 +42,13 @@ class external_adapter_sale_order(osv.osv):
         orders = {}
 
         if order_ids:
+            fields.append("picking_ids")
             orders = order_model.read(cr, uid, order_ids, fields)
+            for order in orders:
+                if order["picking_ids"]:
+                    sched_dates = stock_model.read(cr, uid, order["picking_ids"], ["min_date"])
+                    sched_dates.sort(key=lambda x: datetime.strptime(x["min_date"], '%Y-%m-%d %H:%M:%S'), reverse=True)
+                    order["sched_date"] = sched_dates[0]["min_date"].partition(" ")[0]
         
         return orders
 
@@ -50,7 +57,7 @@ class external_adapter_sale_order(osv.osv):
         line_model = self.pool.get('sale.order.line')
         product_model = self.pool.get('product.product')
 
-        order = order_model.read(cr, uid, [int(order_id)], fields)[0]       
+        order = order_model.read(cr, uid, [order_id], fields)[0]       
 
         lines = {}
 
@@ -66,17 +73,64 @@ class external_adapter_sale_order(osv.osv):
         
         return {"order": order, "lines": lines}
 
+    def create_order(self, cr, uid, lines, pricelist_id, partner_id):
+        order_model = self.pool.get('sale.order')        
+        partner_model = self.pool.get('res.partner')
+
+        address_invoice_id = partner_model.address_get(cr, uid, [partner_id], ['invoice'])['invoice']
+        address_shipping_id = partner_model.address_get(cr, uid, [partner_id], ['delivery'])['delivery']
+
+        # Crear pedido
+        value = {
+            "partner_id": partner_id,
+            "date_order": datetime.now(),
+            "pricelist_id": pricelist_id, 
+            "partner_invoice_id": address_invoice_id,
+            "partner_shipping_id": address_shipping_id
+        }
+        order_id = order_model.create(cr, uid, value)
+
+        # Rellenar lineas
+        self._createSaleOrderLines(cr, uid, order_id, lines, pricelist_id, partner_id)       
+
+        return order_id
 
     def write_order(self, cr, uid, order_id, lines, pricelist_id, partner_id, fields):
         order_model = self.pool.get('sale.order')
-        line_model = self.pool.get('sale.order.line')
-        ext_prod_model = self.pool.get('external.adapter.product')
-        prod_model = self.pool.get('product.product')
+        line_model = self.pool.get('sale.order.line')        
         
-        order = order_model.read(cr, uid, [int(order_id)], fields)[0]       
+        order = order_model.read(cr, uid, [order_id], fields)[0]       
 
         # Borrar lineas
-        line_model.unlink(cr, uid, order["order_line"])                
+        line_model.unlink(cr, uid, order["order_line"])  
+
+        # Rellenar lineas              
+        return self._createSaleOrderLines(cr, uid, order_id, lines, pricelist_id, partner_id)
+
+    def get_invoice_pdf(self, cr, uid, order_id, partner_id):
+        order_model = self.pool.get('sale.order')
+        attach_model = self.pool.get('ir.attachment')
+        
+        order = order_model.read(cr, uid, order_id, ["invoice_ids"])[0]
+
+        pdfs = []
+        
+        for invoice_id in order["invoice_ids"]:                        
+            args = [("partner_id", "=", partner_id), ("res_id", "=", invoice_id)]
+
+            docs_ids = attach_model.search(cr, uid, args)
+
+            if len(docs_ids) > 0:
+                att = attach_model.read(cr, uid, docs_ids[0], ['datas', 'name'])            
+                pdfs.append(att)
+                
+        return pdfs
+
+
+    def _createSaleOrderLines(self, cr, uid, order_id, lines, pricelist_id, partner_id):
+        ext_prod_model = self.pool.get('external.adapter.product')
+        line_model = self.pool.get('sale.order.line')
+        prod_model = self.pool.get('product.product') 
 
         # Rellenar todos los valores a excepción del precio
         for line in lines:
@@ -85,7 +139,7 @@ class external_adapter_sale_order(osv.osv):
                 "product_id": line["product_id"],
                 "name": line["product_name"],
                 "product_uom_qty": Decimal(line["product_uom_qty"]),
-                "order_id": int(order_id)
+                "order_id": order_id
             }
 
             prod =  prod_model.read(cr, uid, [line["product_id"]], ["parent_prod_id", "cost_price"])[0]            
@@ -103,4 +157,3 @@ class external_adapter_sale_order(osv.osv):
             line_model.create(cr, uid, value)
 
         return True
-  
