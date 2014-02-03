@@ -131,6 +131,7 @@ class external_adapter_sale_order(osv.osv):
         ext_prod_model = self.pool.get('external.adapter.product')
         line_model = self.pool.get('sale.order.line')
         prod_model = self.pool.get('product.product') 
+        company_model = self.pool.get('res.company') 
 
         # Rellenar todos los valores a excepción del precio
         for line in lines:
@@ -151,7 +152,16 @@ class external_adapter_sale_order(osv.osv):
                 prod_id = line["product_id"]
             
             product_price = ext_prod_model.get_pricelist(cr, uid, [prod_id], pricelist_id, partner_id)[prod_id][pricelist_id]
-            value["price_unit"] = product_price
+            
+            # Aplicar descuento web
+            company = company_model.read(cr, uid, [1], ["web_discount"])[0]
+
+            if company["web_discount"]:
+                discount = company["web_discount"]
+                value["price_unit"] = product_price * (1-discount/100)
+            else:
+                value["price_unit"] = product_price
+
             value["purchase_price"] = prod["cost_price"]
 
             line_model.create(cr, uid, value)

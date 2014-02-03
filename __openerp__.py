@@ -29,7 +29,7 @@
     'description' : 'Modulo para optimizar ciertas llamadas a módulos de OpenERP desde clientes externos',
     'website': 'http://codeback.es',
     'images': [],    
-    'depends': ['cbk_partner_web_access', 'cbk_product_web_visible'],
+    'depends': ['cbk_partner_web_access', 'cbk_product_web_visible', 'cbk_company_web_discount'],
     'category': '',
     'sequence': 26,
     'demo': [],
