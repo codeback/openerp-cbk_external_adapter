@@ -26,6 +26,7 @@ from datetime import datetime, timedelta
 from openerp.tools.translate import _
 from decimal import Decimal
 import pdb
+import calendar
 
 class external_adapter_sale_order(osv.osv):
     """añadimos los nuevos campos"""
@@ -50,6 +51,21 @@ class external_adapter_sale_order(osv.osv):
                     sched_dates.sort(key=lambda x: datetime.strptime(x["min_date"], '%Y-%m-%d %H:%M:%S'), reverse=True)
                     order["sched_date"] = sched_dates[0]["min_date"].partition(" ")[0]
         
+        return orders
+
+    def get_by_partner_and_month(self, cr, uid, partner_id, fields):
+        order_model = self.pool.get('sale.order')
+        
+        orders = {}
+        
+        year = datetime.now().year
+        for month in range(1,13):
+            date_from = datetime(year,month,1).strftime("%Y-%m-%d")
+            date_to = datetime(year,month,calendar.monthrange(year,month)[1]).strftime("%Y-%m-%d")        
+            args = [("partner_id","=",partner_id),('date_order','>=',date_from), ('date_order','<',date_to)]
+            order_ids = order_model.search(cr, uid, args)
+            orders[str(month)] = order_model.read(cr, uid, order_ids, fields)
+
         return orders
 
     def get_order(self, cr, uid, order_id, fields):
