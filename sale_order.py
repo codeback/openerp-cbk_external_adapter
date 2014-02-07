@@ -137,7 +137,7 @@ class external_adapter_sale_order(osv.osv):
             docs_ids = attach_model.search(cr, uid, args)
 
             if len(docs_ids) > 0:
-                att = attach_model.read(cr, uid, docs_ids[0], ['datas', 'name'])            
+                att = attach_model.read(cr, uid, docs_ids[0], ['datas', 'name'])[0]	
                 pdfs.append(att)
                 
         return pdfs
