@@ -182,4 +182,6 @@ class external_adapter_sale_order(osv.osv):
 
             line_model.create(cr, uid, value)
 
-        return True
+            line["price_unit"] = value["price_unit"]
+
+        return lines
