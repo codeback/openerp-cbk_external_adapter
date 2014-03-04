@@ -74,7 +74,8 @@ class external_adapter_sale_order(osv.osv):
         product_model = self.pool.get('product.product')
 
         order = order_model.read(cr, uid, [order_id], fields)[0]       
-
+        order["partner_id"] = order_model.browse(cr, uid, [order_id])[0].partner_id.id
+        
         lines = {}
 
         fields = ["product_uom_qty", "price_unit", "price_subtotal"]
@@ -115,13 +116,19 @@ class external_adapter_sale_order(osv.osv):
         order_model = self.pool.get('sale.order')
         line_model = self.pool.get('sale.order.line')        
         
-        order = order_model.read(cr, uid, [order_id], fields)[0]       
+        order = order_model.read(cr, uid, [order_id], fields)[0]    
 
-        # Borrar lineas
-        line_model.unlink(cr, uid, order["order_line"])  
+        if partner_id == order_model.browse(cr, uid, [order_id])[0].partner_id.id:
 
-        # Rellenar lineas              
-        return self._createSaleOrderLines(cr, uid, order_id, lines, pricelist_id, partner_id)
+            # Borrar lineas
+            line_model.unlink(cr, uid, order["order_line"])  
+
+            # Rellenar lineas              
+            return self._createSaleOrderLines(cr, uid, order_id, lines, pricelist_id, partner_id)
+
+        else:
+            return False  
+
 
     def get_invoice_pdf(self, cr, uid, order_id, partner_id):
         order_model = self.pool.get('sale.order')
