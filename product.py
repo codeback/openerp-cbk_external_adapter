@@ -72,7 +72,7 @@ class external_adapter_product(osv.osv):
         args = [("web_visible","=",True), ("parent_prod_id","=",prod_id)]
         prod_model = self.pool.get('product.product')
         prod_ids = prod_model.search(cr, uid, args)
-        return prod_model.read(cr, uid, prod_ids, fields)        
+        return prod_model.read(cr, uid, prod_ids, fields, context=context)        
 
     def get_pricelist(self, cr, uid, prod_ids, pricelist_id, partner_id, context=None):
 
