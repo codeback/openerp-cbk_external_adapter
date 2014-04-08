@@ -48,8 +48,8 @@ class external_adapter_product(osv.osv):
         prod_ids = prod_model.search(cr, uid, args)
 
         fields.append("parent_prod_id")
-        prods = prod_model.read(cr, uid, prod_ids, fields, context=context)        
-
+        prods = prod_model.read(cr, uid, prod_ids, fields, context=context)
+        
         for prod in prods:
             if prod["parent_prod_id"]:
                 # Se obtiene el precio del producto padre
@@ -63,6 +63,12 @@ class external_adapter_product(osv.osv):
         return prods
 
     def get_related_products(self, cr, uid, prod_id, fields, context=None):        
+
+        if context == None:
+            context = {}
+
+        context['lang'] = "es_ES"
+        
         args = [("web_visible","=",True), ("parent_prod_id","=",prod_id)]
         prod_model = self.pool.get('product.product')
         prod_ids = prod_model.search(cr, uid, args)

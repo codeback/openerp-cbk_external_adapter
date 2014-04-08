@@ -68,7 +68,13 @@ class external_adapter_sale_order(osv.osv):
 
         return orders
 
-    def get_order(self, cr, uid, order_id, fields):
+    def get_order(self, cr, uid, order_id, fields, context=None):
+
+        if context == None:
+            context = {}
+
+        context['lang'] = "es_ES"
+
         order_model = self.pool.get('sale.order')
         line_model = self.pool.get('sale.order.line')
         product_model = self.pool.get('product.product')
@@ -84,8 +90,8 @@ class external_adapter_sale_order(osv.osv):
         if order["order_line"]:
             lines = line_model.read(cr, uid, order["order_line"], fields)            
             for line in lines:
-                product = product_model.read(cr, uid, line["product_id"][0], ["name_template", "image_small"])
-                line["product_name"] = product["name_template"]
+                product = product_model.read(cr, uid, line["product_id"][0], ["name", "image_small"], context=context)
+                line["product_name"] = product["name"]
                 line["product_image"] = product["image_small"]
         
         return {"order": order, "lines": lines}
