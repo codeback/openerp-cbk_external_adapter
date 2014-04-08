@@ -36,6 +36,11 @@ class external_adapter_product(osv.osv):
 
         prod_model = self.pool.get('product.product')
 
+        if context == None:
+            context = {}
+
+        context['lang'] = "es_ES"
+
         if not args:
             args = []
 
@@ -43,7 +48,7 @@ class external_adapter_product(osv.osv):
         prod_ids = prod_model.search(cr, uid, args)
 
         fields.append("parent_prod_id")
-        prods = prod_model.read(cr, uid, prod_ids, fields)        
+        prods = prod_model.read(cr, uid, prod_ids, fields, context=context)        
 
         for prod in prods:
             if prod["parent_prod_id"]:
